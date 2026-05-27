@@ -86,6 +86,28 @@ func (pf ProjectFile) GetData() (ProjectFile, error) {
 	return projectFile, nil
 }
 
+// GetDataInNamespace -
+func (pf ProjectFile) GetDataInNamespace(namespaceID int64) (ProjectFile, error) {
+	var projectFile ProjectFile
+	err := sq.
+		Select("pf.id, pf.project_id, pf.filename, pf.insert_time, pf.update_time").
+		From(projectFileTable+" pf").
+		Join("`project` p ON p.id = pf.project_id").
+		Where(sq.Eq{"pf.id": pf.ID, "p.namespace_id": namespaceID}).
+		RunWith(DB).
+		QueryRow().
+		Scan(
+			&projectFile.ID,
+			&projectFile.ProjectID,
+			&projectFile.Filename,
+			&projectFile.InsertTime,
+			&projectFile.UpdateTime)
+	if err != nil {
+		return projectFile, err
+	}
+	return projectFile, nil
+}
+
 // AddRow return LastInsertId
 func (pf ProjectFile) AddRow() (int64, error) {
 	result, err := sq.

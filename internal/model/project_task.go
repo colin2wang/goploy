@@ -36,6 +36,23 @@ type ProjectTask struct {
 // ProjectTasks -
 type ProjectTasks []ProjectTask
 
+// GetDataInNamespace -
+func (pt ProjectTask) GetDataInNamespace(namespaceID int64) (ProjectTask, error) {
+	var projectTask ProjectTask
+	err := sq.
+		Select("pt.id, pt.project_id").
+		From(projectTaskTable+" pt").
+		Join("`project` p ON p.id = pt.project_id").
+		Where(sq.Eq{"pt.id": pt.ID, "p.namespace_id": namespaceID}).
+		RunWith(DB).
+		QueryRow().
+		Scan(&projectTask.ID, &projectTask.ProjectID)
+	if err != nil {
+		return projectTask, err
+	}
+	return projectTask, nil
+}
+
 // GetListByProjectID -
 func (pt ProjectTask) GetListByProjectID(pagination Pagination) (ProjectTasks, Pagination, error) {
 	rows, err := sq.

@@ -523,7 +523,7 @@ func (Project) Edit(gp *server.Goploy) server.Response {
 		return response.JSON{Code: response.Error, Message: err.Error()}
 	}
 
-	projectData, err := model.Project{ID: reqData.ID}.GetData()
+	projectData, err := model.Project{ID: reqData.ID}.GetDataInNamespace(gp.Namespace.ID)
 	if err != nil {
 		return response.JSON{Code: response.Error, Message: err.Error()}
 	}
@@ -614,6 +614,9 @@ func (Project) SetAutoDeploy(gp *server.Goploy) server.Response {
 	if err := gp.Decode(&reqData); err != nil {
 		return response.JSON{Code: response.Error, Message: err.Error()}
 	}
+	if _, err := (model.Project{ID: reqData.ID}).GetDataInNamespace(gp.Namespace.ID); err != nil {
+		return response.JSON{Code: response.Error, Message: err.Error()}
+	}
 	err := model.Project{
 		ID:         reqData.ID,
 		AutoDeploy: reqData.AutoDeploy,
@@ -641,7 +644,7 @@ func (Project) Remove(gp *server.Goploy) server.Response {
 		return response.JSON{Code: response.Error, Message: err.Error()}
 	}
 
-	projectData, err := model.Project{ID: reqData.ID}.GetData()
+	projectData, err := model.Project{ID: reqData.ID}.GetDataInNamespace(gp.Namespace.ID)
 	if err != nil {
 		return response.JSON{Code: response.Error, Message: err.Error()}
 	}
@@ -675,6 +678,16 @@ func (Project) UploadFile(gp *server.Goploy) server.Response {
 	var reqData ReqData
 	if err := gp.Decode(&reqData); err != nil {
 		return response.JSON{Code: response.Error, Message: err.Error()}
+	}
+
+	if _, err := (model.Project{ID: reqData.ProjectID}).GetDataInNamespace(gp.Namespace.ID); err != nil {
+		return response.JSON{Code: response.Error, Message: err.Error()}
+	}
+
+	if reqData.ProjectFileID != 0 {
+		if _, err := (model.ProjectFile{ID: reqData.ProjectFileID}).GetDataInNamespace(gp.Namespace.ID); err != nil {
+			return response.JSON{Code: response.Error, Message: err.Error()}
+		}
 	}
 
 	file, _, err := gp.Request.FormFile("file")
@@ -750,6 +763,10 @@ func (Project) AddFile(gp *server.Goploy) server.Response {
 		return response.JSON{Code: response.Error, Message: err.Error()}
 	}
 
+	if _, err := (model.Project{ID: reqData.ProjectID}).GetDataInNamespace(gp.Namespace.ID); err != nil {
+		return response.JSON{Code: response.Error, Message: err.Error()}
+	}
+
 	filePath := path.Join(config.GetProjectFilePath(reqData.ProjectID), reqData.Filename)
 	fileDir := path.Dir(filePath)
 	if _, err := os.Stat(fileDir); err != nil {
@@ -808,7 +825,7 @@ func (Project) EditFile(gp *server.Goploy) server.Response {
 		return response.JSON{Code: response.Error, Message: err.Error()}
 	}
 
-	projectFileData, err := model.ProjectFile{ID: reqData.ID}.GetData()
+	projectFileData, err := model.ProjectFile{ID: reqData.ID}.GetDataInNamespace(gp.Namespace.ID)
 	if err != nil {
 		return response.JSON{Code: response.Error, Message: err.Error()}
 	}
@@ -851,7 +868,7 @@ func (Project) RemoveFile(gp *server.Goploy) server.Response {
 		return response.JSON{Code: response.Error, Message: err.Error()}
 	}
 
-	projectFileData, err := model.ProjectFile{ID: reqData.ProjectFileID}.GetData()
+	projectFileData, err := model.ProjectFile{ID: reqData.ProjectFileID}.GetDataInNamespace(gp.Namespace.ID)
 	if err != nil {
 		return response.JSON{Code: response.Error, Message: err.Error()}
 	}
@@ -951,6 +968,10 @@ func (Project) AddTask(gp *server.Goploy) server.Response {
 		return response.JSON{Code: response.Error, Message: err.Error()}
 	}
 
+	if _, err := (model.Project{ID: reqData.ProjectID}).GetDataInNamespace(gp.Namespace.ID); err != nil {
+		return response.JSON{Code: response.Error, Message: err.Error()}
+	}
+
 	id, err := model.ProjectTask{
 		ProjectID: reqData.ProjectID,
 		CommitID:  reqData.Commit,
@@ -985,6 +1006,10 @@ func (Project) RemoveTask(gp *server.Goploy) server.Response {
 	}
 	var reqData ReqData
 	if err := gp.Decode(&reqData); err != nil {
+		return response.JSON{Code: response.Error, Message: err.Error()}
+	}
+
+	if _, err := (model.ProjectTask{ID: reqData.ID}).GetDataInNamespace(gp.Namespace.ID); err != nil {
 		return response.JSON{Code: response.Error, Message: err.Error()}
 	}
 
@@ -1046,6 +1071,10 @@ func (Project) AddProcess(gp *server.Goploy) server.Response {
 		return response.JSON{Code: response.Error, Message: err.Error()}
 	}
 
+	if _, err := (model.Project{ID: reqData.ProjectID}).GetDataInNamespace(gp.Namespace.ID); err != nil {
+		return response.JSON{Code: response.Error, Message: err.Error()}
+	}
+
 	id, err := model.ProjectProcess{
 		ProjectID: reqData.ProjectID,
 		Name:      reqData.Name,
@@ -1088,6 +1117,10 @@ func (Project) EditProcess(gp *server.Goploy) server.Response {
 		return response.JSON{Code: response.Error, Message: err.Error()}
 	}
 
+	if _, err := (model.ProjectProcess{ID: reqData.ID}).GetDataInNamespace(gp.Namespace.ID); err != nil {
+		return response.JSON{Code: response.Error, Message: err.Error()}
+	}
+
 	err := model.ProjectProcess{
 		ID:      reqData.ID,
 		Name:    reqData.Name,
@@ -1116,6 +1149,10 @@ func (Project) DeleteProcess(gp *server.Goploy) server.Response {
 	}
 	var reqData ReqData
 	if err := gp.Decode(&reqData); err != nil {
+		return response.JSON{Code: response.Error, Message: err.Error()}
+	}
+
+	if _, err := (model.ProjectProcess{ID: reqData.ID}).GetDataInNamespace(gp.Namespace.ID); err != nil {
 		return response.JSON{Code: response.Error, Message: err.Error()}
 	}
 
