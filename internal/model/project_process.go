@@ -47,6 +47,23 @@ func (pp ProjectProcess) GetData() (ProjectProcess, error) {
 	return projectProcess, nil
 }
 
+// GetDataInNamespace -
+func (pp ProjectProcess) GetDataInNamespace(namespaceID int64) (ProjectProcess, error) {
+	var projectProcess ProjectProcess
+	err := sq.
+		Select("pp.id, pp.project_id").
+		From(projectProcessTable+" pp").
+		Join("`project` p ON p.id = pp.project_id").
+		Where(sq.Eq{"pp.id": pp.ID, "p.namespace_id": namespaceID}).
+		RunWith(DB).
+		QueryRow().
+		Scan(&projectProcess.ID, &projectProcess.ProjectID)
+	if err != nil {
+		return projectProcess, err
+	}
+	return projectProcess, nil
+}
+
 func (pp ProjectProcess) GetListByProjectID(page, limit uint64) (ProjectProcesses, error) {
 	rows, err := sq.
 		Select("id, project_id, name, start, stop, status, restart, insert_time, update_time").

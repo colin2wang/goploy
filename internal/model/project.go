@@ -550,6 +550,76 @@ func (p Project) GetData() (Project, error) {
 	return project, nil
 }
 
+func (p Project) GetDataInNamespace(namespaceID int64) (Project, error) {
+	var project Project
+	var script []byte
+	err := sq.
+		Select(`
+			id,
+			namespace_id,
+			name,
+			repo_type,
+			url,
+			label,
+			path,
+			environment,
+			branch,
+			symlink_path,
+			symlink_backup_number,
+			review,
+			review_url,
+			script,
+			transfer_type,
+			transfer_option,
+			deploy_server_mode,
+			auto_deploy,
+			deploy_state,
+			notify_type,
+			notify_target,
+			project.
+			last_publish_token,
+			insert_time,
+			update_time`).
+		From(projectTable).
+		Where(sq.Eq{"id": p.ID, "namespace_id": namespaceID}).
+		RunWith(DB).
+		QueryRow().
+		Scan(
+			&project.ID,
+			&project.NamespaceID,
+			&project.Name,
+			&project.RepoType,
+			&project.URL,
+			&project.Label,
+			&project.Path,
+			&project.Environment,
+			&project.Branch,
+			&project.SymlinkPath,
+			&project.SymlinkBackupNumber,
+			&project.Review,
+			&project.ReviewURL,
+			&script,
+			&project.TransferType,
+			&project.TransferOption,
+			&project.DeployServerMode,
+			&project.AutoDeploy,
+			&project.DeployState,
+			&project.NotifyType,
+			&project.NotifyTarget,
+			&project.LastPublishToken,
+			&project.InsertTime,
+			&project.UpdateTime)
+	if err != nil {
+		return project, err
+	}
+
+	if err = json.Unmarshal(script, &project.Script); err != nil {
+		return project, err
+	}
+
+	return project, nil
+}
+
 func (p Project) GetUserProjectData() (Project, error) {
 	var project Project
 	err := sq.
