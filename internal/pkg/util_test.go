@@ -4,6 +4,40 @@ import (
 	"testing"
 )
 
+func TestValidateRelativePath(t *testing.T) {
+	tests := []struct {
+		name      string
+		input     string
+		expectErr bool
+	}{
+		{"empty", "", true},
+		{"simple file", "config.yml", false},
+		{"nested file", "src/main.go", false},
+		{"current dir prefix", "./src/main.go", false},
+		{"parent traversal", "../etc/passwd", true},
+		{"deep parent traversal", "../../etc/passwd", true},
+		{"embedded parent traversal", "src/../../etc/passwd", true},
+		{"trailing parent", "src/..", false},
+		{"only parent", "..", true},
+		{"unix absolute", "/etc/passwd", true},
+		{"windows absolute", `C:\Windows\System32\config\SAM`, true},
+		{"windows backslash traversal", `..\..\Windows\System32`, true},
+		{"mixed slash traversal", `src/../../etc/passwd`, true},
+		{"null byte injection", "src/main.go\x00/etc/passwd", true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := ValidateRelativePath(tt.input)
+			if tt.expectErr && err == nil {
+				t.Errorf("expected error for %q, got nil", tt.input)
+			}
+			if !tt.expectErr && err != nil {
+				t.Errorf("unexpected error for %q: %v", tt.input, err)
+			}
+		})
+	}
+}
+
 func TestParseCommandLine(t *testing.T) {
 	tests := []struct {
 		name        string

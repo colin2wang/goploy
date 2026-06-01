@@ -357,6 +357,10 @@ func (Project) GetReposFileList(gp *server.Goploy) server.Response {
 		return response.JSON{Code: response.Error, Message: err.Error()}
 	}
 
+	if err := pkg.ValidateRelativePath(reqData.Path); err != nil {
+		return response.JSON{Code: response.Error, Message: err.Error()}
+	}
+
 	files, err := os.ReadDir(path.Join(config.GetProjectPath(reqData.ID), reqData.Path))
 	if err != nil {
 		return response.JSON{Code: response.Error, Message: err.Error()}

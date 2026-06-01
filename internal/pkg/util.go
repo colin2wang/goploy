@@ -5,10 +5,33 @@
 package pkg
 
 import (
+	"errors"
 	"fmt"
+	"path"
+	"path/filepath"
 	"regexp"
 	"strings"
 )
+
+// ValidateRelativePath rejects user-supplied paths that would escape a base
+// directory via traversal (e.g. "../../etc/passwd"), absolute paths, or null
+// bytes. It accepts only clean relative paths that stay within their base.
+func ValidateRelativePath(p string) error {
+	if p == "" {
+		return errors.New("path is required")
+	}
+	if strings.ContainsRune(p, '\x00') {
+		return errors.New("invalid path")
+	}
+	if path.IsAbs(p) || filepath.IsAbs(p) {
+		return errors.New("absolute path not allowed")
+	}
+	cleaned := path.Clean(strings.ReplaceAll(p, `\`, `/`))
+	if cleaned == ".." || strings.HasPrefix(cleaned, "../") {
+		return errors.New("invalid path")
+	}
+	return nil
+}
 
 // GetScriptExt return script extension default bash
 func GetScriptExt(scriptMode string) string {

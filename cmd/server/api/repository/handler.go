@@ -9,6 +9,7 @@ import (
 	"github.com/zhenorzz/goploy/cmd/server/api"
 	"github.com/zhenorzz/goploy/config"
 	"github.com/zhenorzz/goploy/internal/model"
+	"github.com/zhenorzz/goploy/internal/pkg"
 	"github.com/zhenorzz/goploy/internal/repo"
 	"github.com/zhenorzz/goploy/internal/server"
 	"github.com/zhenorzz/goploy/internal/server/response"
@@ -179,6 +180,12 @@ func (Repository) GetFileList(gp *server.Goploy) server.Response {
 		List []item `json:"list"`
 	}
 
+	if reqData.Dir != "" {
+		if err := pkg.ValidateRelativePath(reqData.Dir); err != nil {
+			return response.JSON{Code: response.Error, Message: err.Error()}
+		}
+	}
+
 	dirEntries, err := os.ReadDir(path.Join(config.GetProjectPath(reqData.ID), reqData.Dir))
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
@@ -220,6 +227,10 @@ func (Repository) PreviewFile(gp *server.Goploy) server.Response {
 		return response.JSON{Code: response.Error, Message: err.Error()}
 	}
 
+	if err := pkg.ValidateRelativePath(reqData.File); err != nil {
+		return response.JSON{Code: response.Error, Message: err.Error()}
+	}
+
 	return response.File{Filename: path.Join(config.GetProjectPath(reqData.ID), reqData.File), Disposition: "inline"}
 }
 
@@ -241,6 +252,10 @@ func (Repository) DownloadFile(gp *server.Goploy) server.Response {
 		return response.JSON{Code: response.Error, Message: err.Error()}
 	}
 
+	if err := pkg.ValidateRelativePath(reqData.File); err != nil {
+		return response.JSON{Code: response.Error, Message: err.Error()}
+	}
+
 	return response.File{Filename: path.Join(config.GetProjectPath(reqData.ID), reqData.File), Disposition: "attachment"}
 }
 
@@ -258,6 +273,10 @@ func (Repository) DeleteFile(gp *server.Goploy) server.Response {
 	}
 	var reqData ReqData
 	if err := gp.Decode(&reqData); err != nil {
+		return response.JSON{Code: response.Error, Message: err.Error()}
+	}
+
+	if err := pkg.ValidateRelativePath(reqData.File); err != nil {
 		return response.JSON{Code: response.Error, Message: err.Error()}
 	}
 
