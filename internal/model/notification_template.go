@@ -5,6 +5,8 @@
 package model
 
 import (
+	"time"
+
 	sq "github.com/Masterminds/squirrel"
 )
 
@@ -27,6 +29,7 @@ func (nt NotificationTemplate) EditRow() error {
 		Update(notificationTemplateTable).
 		Set("template", nt.Template).
 		Set("title", nt.Title).
+		Set("update_time", time.Now().Format("2006-01-02 15:04:05")).
 		Where(sq.Eq{"id": nt.ID}).
 		RunWith(DB).
 		Exec()

@@ -79,21 +79,30 @@ Goploy is commonly used for:
 
 via [release](https://github.com/zhenorzz/goploy/releases)
 
-or build from tag
+or build from source
 ```
 git clone https://github.com/zhenorzz/goploy.git
 cd ./goploy
-git checkout -b tagname
 cd ./web
 npm install && npm run build
 cd ../
 go build -o goploy cmd/server/main.go
 ```
 
+**Cross-compilation:**
+
+| Platform | Command |
+|----------|---------|
+| Linux amd64 + Windows amd64 | `build.bat` (Windows) or `./build.sh` (Linux/macOS) |
+| Linux amd64 | `env GOOS=linux GOARCH=amd64 go build -o goploy cmd/server/main.go` |
+| Windows amd64 | `env GOOS=windows GOARCH=amd64 go build -o goploy.exe cmd/server/main.go` |
+
+**Database:** SQLite (embedded, no external database required). The database file is created automatically at the configured path (default: `data/goploy.db`).
+
 ## Use
-1. Run ./goploy or goploy.exe or goploy.mac
-2. Follow the installation guide
-3. web http://ip:port  (Account:Password admin:admin!@#)
+1. Run `./goploy` or `goploy.exe`
+2. Follow the installation guide (enter the SQLite database path and listening port)
+3. Open `http://ip:port` in browser (Account:Password admin:admin!@#)
 
 ## Preview
 ![Preview](./preview.gif)
@@ -102,19 +111,18 @@ go build -o goploy cmd/server/main.go
 ![Diagram](./goploy.png)
 
 ## Backend
-1. Install go >= 1.16
-2. go mod required
-3. edit goploy.toml `cp goploy.example.toml goploy.toml`
-4. build [Frontend](#Frontend)
-5. run `cd cmd/server && go run main.go --asset-dir=../../`
-6. use gin (hot reload)
+1. Install go >= 1.21
+2. `cp goploy.example.toml goploy.toml` and edit the config
+3. build [Frontend](#Frontend)
+4. run `cd cmd/server && go run main.go --asset-dir=../../`
+5. or use air (hot reload)
 
 ## Frontend
 1. `cd web`
-2. `npm install` or `yarn install`
+2. `pnpm install` or `npm install` or `yarn install`
 3. edit .env.development
-4. `npm run dev` or `yarn dev`
-5. build `npm run build` or `yarn build`
+4. `pnpm run dev` or `npm run dev` or `yarn dev`
+5. build `pnpm run build` or `npm run build` or `yarn build`
 
 ## Contact
 

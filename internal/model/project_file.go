@@ -4,7 +4,10 @@
 
 package model
 
-import sq "github.com/Masterminds/squirrel"
+import (
+	sq "github.com/Masterminds/squirrel"
+	"time"
+)
 
 const projectFileTable = "`project_file`"
 
@@ -128,7 +131,8 @@ func (pf ProjectFile) EditRow() error {
 	_, err := sq.
 		Update(projectFileTable).
 		SetMap(sq.Eq{
-			"filename": pf.Filename,
+			"filename":    pf.Filename,
+			"update_time": time.Now().Format("2006-01-02 15:04:05"),
 		}).
 		Where(sq.Eq{"id": pf.ID}).
 		RunWith(DB).

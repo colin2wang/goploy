@@ -12,6 +12,8 @@ import (
 	"github.com/zhenorzz/goploy/config"
 	"github.com/zhenorzz/goploy/database"
 	"github.com/zhenorzz/goploy/internal/pkg"
+	_ "modernc.org/sqlite"
+	"os"
 	"path"
 	"sort"
 	"strings"
@@ -72,47 +74,35 @@ func connectDB() error {
 }
 
 func Open(dbConfig config.DBConfig) (*SQLRunner, error) {
-	dbConn := fmt.Sprintf(
-		"%s:%s@(%s:%s)/%s?charset=utf8mb4,utf8",
-		dbConfig.User,
-		dbConfig.Password,
-		dbConfig.Host,
-		dbConfig.Port,
-		dbConfig.Database,
-	)
-
-	{
-		// @see https://github.com/go-sql-driver/mysql/wiki/Examples#a-word-on-sqlopen
-		var err error
-		db, err := sql.Open(dbConfig.Type, dbConn)
-		if err != nil {
-			return nil, err
+	// Ensure the parent directory exists
+	dbDir := path.Dir(dbConfig.Path)
+	if dbDir != "." {
+		if err := os.MkdirAll(dbDir, 0755); err != nil {
+			return nil, fmt.Errorf("create db directory %s: %w", dbDir, err)
 		}
+	}
 
-		// ping db to make sure the db has connected
-		if err = db.Ping(); err != nil {
-			return nil, err
+	db, err := sql.Open("sqlite", dbConfig.Path)
+	if err != nil {
+		return nil, fmt.Errorf("sqlite open: %w", err)
+	}
+
+	// ping db to make sure the db has connected
+	if err = db.Ping(); err != nil {
+		return nil, fmt.Errorf("sqlite ping: %w", err)
+	}
+
+	// SQLite PRAGMA settings for WAL mode and performance
+	for _, pragma := range []string{
+		"PRAGMA journal_mode=WAL",
+		"PRAGMA busy_timeout=5000",
+		"PRAGMA foreign_keys=ON",
+	} {
+		if _, err := db.Exec(pragma); err != nil {
+			return nil, fmt.Errorf("sqlite pragma: %w", err)
 		}
-		return &SQLRunner{DB: db}, nil
 	}
-}
-
-func (db *SQLRunner) CreateDB(name string) error {
-	query := fmt.Sprintf("CREATE DATABASE IF NOT EXISTS `%s`", name)
-	_, err := db.Exec(query)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (db *SQLRunner) UseDB(name string) error {
-	query := fmt.Sprintf("USE `%s`", name)
-	_, err := db.Exec(query)
-	if err != nil {
-		return err
-	}
-	return nil
+	return &SQLRunner{DB: db}, nil
 }
 
 func (db *SQLRunner) ImportSQL(sqlPath string) error {
@@ -127,7 +117,7 @@ func (db *SQLRunner) ImportSQL(sqlPath string) error {
 		}
 		_, err := db.Exec(query)
 		if err != nil {
-			return err
+			return fmt.Errorf("execute sql error: %w, sql: %s", err, query[:min(len(query), 200)])
 		}
 	}
 	return nil
@@ -168,6 +158,9 @@ func Update(targetVerStr string) error {
 	var vers []*version.Version
 	for _, entry := range sqlEntries {
 		filename := entry.Name()
+		if filename == database.GoploySQL {
+			continue
+		}
 		ver, err := version.NewVersion(filename[0 : len(filename)-len(path.Ext(filename))])
 		if err != nil {
 			continue

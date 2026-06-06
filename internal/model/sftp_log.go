@@ -73,7 +73,7 @@ func (sl SftpLog) GetList(page, limit uint64) (SftpLogs, error) {
 	rows, err := builder.
 		Limit(limit).
 		Offset((page - 1) * limit).
-		OrderBy("id DESC").
+		OrderBy(sftpLogTable + ".id DESC").
 		RunWith(DB).
 		Query()
 	if err != nil {

@@ -6,6 +6,7 @@ package model
 
 import (
 	sq "github.com/Masterminds/squirrel"
+	"time"
 )
 
 const serverProcessTable = "`server_process`"
@@ -94,8 +95,9 @@ func (sp ServerProcess) EditRow() error {
 	_, err := sq.
 		Update(serverProcessTable).
 		SetMap(sq.Eq{
-			"name":  sp.Name,
-			"items": sp.Items,
+			"name":        sp.Name,
+			"items":       sp.Items,
+			"update_time": time.Now().Format("2006-01-02 15:04:05"),
 		}).
 		Where(sq.Eq{"id": sp.ID}).
 		RunWith(DB).

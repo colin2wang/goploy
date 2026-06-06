@@ -1,4 +1,4 @@
-# Import sql manually https://github.com/zhenorzz/goploy/blob/master/model/sql/goploy.sql
+# SQLite backend, no MySQL required
 FROM alpine
 LABEL maintainer="zhenorzz@gmail.com"
 ARG GOPLOY_VER=v1.17.5
@@ -27,7 +27,7 @@ RUN chmod a+x /opt/goploy/goploy
 
 EXPOSE 80
 
-VOLUME ["/opt/goploy/repository/"]
+VOLUME ["/opt/goploy/repository/", "/opt/goploy/data/"]
 
 WORKDIR /opt/goploy/
 

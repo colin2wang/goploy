@@ -5,6 +5,8 @@
 package model
 
 import (
+	"time"
+
 	sq "github.com/Masterminds/squirrel"
 )
 
@@ -38,7 +40,8 @@ func (sc SystemConfig) EditRowByKey() error {
 	builder := sq.
 		Update(systemConfigTable).
 		SetMap(sq.Eq{
-			"value": sc.Value,
+			"value":       sc.Value,
+			"update_time": time.Now().Format("2006-01-02 15:04:05"),
 		}).
 		Where(sq.Eq{"`key`": sc.Key})
 	_, err := builder.RunWith(DB).Exec()

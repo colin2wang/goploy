@@ -6,6 +6,8 @@ package model
 
 import (
 	"fmt"
+	"time"
+
 	sq "github.com/Masterminds/squirrel"
 )
 
@@ -89,7 +91,7 @@ func (tl TerminalLog) GetList(page, limit uint64) (TerminalLogs, error) {
 		builder = builder.Where(sq.Eq{serverTable + ".name": tl.ServerName})
 	}
 
-	rows, err := builder.Limit(limit).Offset((page - 1) * limit).OrderBy("id DESC").
+	rows, err := builder.Limit(limit).Offset((page - 1) * limit).OrderBy(terminalLogTable + ".id DESC").
 		RunWith(DB).Query()
 	if err != nil {
 		return nil, err
@@ -160,7 +162,8 @@ func (tl TerminalLog) EditRow() error {
 	_, err := sq.
 		Update(terminalLogTable).
 		SetMap(sq.Eq{
-			"end_time": tl.EndTime,
+			"end_time":    tl.EndTime,
+			"update_time": time.Now().Format("2006-01-02 15:04:05"),
 		}).
 		Where(sq.Eq{"id": tl.ID}).
 		RunWith(DB).

@@ -8,6 +8,7 @@ import (
 	"github.com/zhenorzz/goploy/internal/pkg"
 	"strconv"
 	"strings"
+	"time"
 
 	sq "github.com/Masterminds/squirrel"
 )
@@ -271,6 +272,7 @@ func (s Server) EditRow() error {
 			"jump_path":     s.JumpPath,
 			"description":   s.Description,
 			"os_info":       s.OSInfo,
+			"update_time":   time.Now().Format("2006-01-02 15:04:05"),
 		}).
 		Where(sq.Eq{"id": s.ID}).
 		RunWith(DB).

@@ -20,3 +20,9 @@ goploy.exe*
 goploy.mac
 goploy.pid
 goploy.toml
+
+# Build output
+build/
+
+# AI Tools
+.atomcode/

@@ -10,6 +10,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/hashicorp/go-version"
+	logrus "github.com/sirupsen/logrus"
 	"github.com/zhenorzz/goploy/cmd/server/api/agent"
 	"github.com/zhenorzz/goploy/cmd/server/api/cron"
 	"github.com/zhenorzz/goploy/cmd/server/api/deploy"
@@ -40,8 +41,6 @@ import (
 	"strings"
 	"syscall"
 	"time"
-
-	_ "github.com/go-sql-driver/mysql"
 )
 
 var (
@@ -98,6 +97,32 @@ func main() {
 		return
 	}
 	handleClientSignal()
+
+	// Ensure logs directory exists for crash recovery before config.Init()
+	var crashFile *os.File
+	if err := os.MkdirAll("logs", 0755); err == nil {
+		crashFile, err = os.OpenFile("logs/crash.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+		if err == nil {
+			defer crashFile.Close()
+		}
+	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			msg := fmt.Sprintf("[PANIC] %s\n%s\n", time.Now().Format(time.DateTime), r)
+			// Write to crash.log directly
+			if crashFile != nil {
+				crashFile.WriteString(msg)
+				crashFile.Sync()
+			}
+			// Write to logrus if already initialized (it goes to goploy.log)
+			logrus.WithField("panic", r).Error("application panic, shutting down")
+			// Always print to stderr
+			fmt.Fprint(os.Stderr, msg)
+			os.Exit(1)
+		}
+	}()
+
 	println(`
    ______            __           
   / ____/___  ____  / /___  __  __
@@ -161,7 +186,7 @@ func main() {
 func install() {
 	_, err := os.Stat(config.GetConfigFile())
 	if err == nil || os.IsExist(err) {
-		println("The configuration file already exists, no need to reinstall (if you need to reinstall, please back up the database `goploy` first, delete the .env file, then restart.)")
+		println("The configuration file already exists, no need to reinstall (if you need to reinstall, please back up the database file first, delete the config file, then restart.)")
 		return
 	}
 	cfg := config.Config{
@@ -169,42 +194,28 @@ func install() {
 		APP:    config.APPConfig{DeployLimit: int32(runtime.NumCPU()), ShutdownTimeout: 10},
 		Cookie: config.CookieConfig{Name: "goploy_token", Expire: 86400},
 		JWT:    config.JWTConfig{Key: time.Now().String()},
-		DB:     config.DBConfig{Type: "mysql", Host: "127.0.0.1", Port: "3306", Database: "goploy"},
-		Log:    config.LogConfig{Path: "stdout"},
+		DB:     config.DBConfig{Type: "sqlite", Path: "data/goploy.db"},
+		Log:    config.LogConfig{Path: "logs"},
 		Web:    config.WebConfig{Port: "80"},
 	}
 
 	if !runningInDocker() {
 		cfg = readStdin(cfg)
 	} else {
-		cfg.DB.Host = os.Getenv("DB_HOST")
-		cfg.DB.User = os.Getenv("DB_USER")
-		cfg.DB.Password = os.Getenv("DB_USER_PASSWORD")
-		cfg.DB.Database = os.Getenv("DB_NAME")
-		cfg.DB.Port = os.Getenv("DB_PORT")
-		if cfg.DB.Port == "" {
-			cfg.DB.Port = "3306"
+		cfg.DB.Path = os.Getenv("DB_PATH")
+		if cfg.DB.Path == "" {
+			cfg.DB.Path = "data/goploy.db"
 		}
 	}
 
 	println("Start to install the database...")
 
-	// open connection without database
-	dbConfig := cfg.DB
-	dbConfig.Database = ""
-	runner, err := model.Open(dbConfig)
+	runner, err := model.Open(cfg.DB)
 	if err != nil {
 		panic(err)
 	}
 	defer runner.Close()
 
-	// create database if not exists
-	if err := runner.CreateDB(cfg.DB.Database); err != nil {
-		panic(err)
-	}
-	if err := runner.UseDB(cfg.DB.Database); err != nil {
-		panic(err)
-	}
 	if err := runner.ImportSQL(database.GoploySQL); err != nil {
 		panic(err)
 	}
@@ -254,51 +265,14 @@ func readStdin(cfg config.Config) config.Config {
 	inputReader := bufio.NewReader(os.Stdin)
 	println("Installation guidelines (Enter to confirm input)")
 
-	println("Please enter the mysql user:")
-	mysqlUser, err := inputReader.ReadString('\n')
+	println("Please enter the sqlite database path(default data/goploy.db):")
+	dbPath, err := inputReader.ReadString('\n')
 	if err != nil {
 		panic("There were errors reading, exiting program.")
 	}
-	cfg.DB.User = pkg.ClearNewline(mysqlUser)
-
-	println("Please enter the mysql password:")
-	mysqlPassword, err := inputReader.ReadString('\n')
-	if err != nil {
-		panic("There were errors reading, exiting program.")
-	}
-	mysqlPassword = pkg.ClearNewline(mysqlPassword)
-	if len(mysqlPassword) != 0 {
-		cfg.DB.Password = mysqlPassword
-	}
-
-	println("Please enter the mysql host(default 127.0.0.1, without port):")
-	mysqlHost, err := inputReader.ReadString('\n')
-	if err != nil {
-		panic("There were errors reading, exiting program.")
-	}
-	mysqlHost = pkg.ClearNewline(mysqlHost)
-	if len(mysqlHost) != 0 {
-		cfg.DB.Host = mysqlHost
-	}
-
-	println("Please enter the mysql port(default 3306):")
-	mysqlPort, err := inputReader.ReadString('\n')
-	if err != nil {
-		panic("There were errors reading, exiting program.")
-	}
-	mysqlPort = pkg.ClearNewline(mysqlPort)
-	if len(mysqlPort) != 0 {
-		cfg.DB.Port = mysqlPort
-	}
-
-	println("Please enter the database name(default goploy):")
-	mysqlDB, err := inputReader.ReadString('\n')
-	if err != nil {
-		panic("There were errors reading, exiting program.")
-	}
-	mysqlDB = pkg.ClearNewline(mysqlDB)
-	if len(mysqlDB) != 0 {
-		cfg.DB.Database = mysqlDB
+	dbPath = pkg.ClearNewline(dbPath)
+	if len(dbPath) != 0 {
+		cfg.DB.Path = dbPath
 	}
 
 	println("Please enter the absolute path of the log directory(default stdout):")

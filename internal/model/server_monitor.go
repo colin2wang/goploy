@@ -5,6 +5,8 @@
 package model
 
 import (
+	"time"
+
 	sq "github.com/Masterminds/squirrel"
 )
 
@@ -197,6 +199,7 @@ func (sm ServerMonitor) EditRow() error {
 			"end_time":      sm.EndTime,
 			"notify_type":   sm.NotifyType,
 			"notify_target": sm.NotifyTarget,
+			"update_time":   time.Now().Format("2006-01-02 15:04:05"),
 		}).
 		Where(sq.Eq{"id": sm.ID}).
 		RunWith(DB).

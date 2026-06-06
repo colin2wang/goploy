@@ -5,6 +5,8 @@
 package model
 
 import (
+	"time"
+
 	sq "github.com/Masterminds/squirrel"
 )
 
@@ -37,8 +39,11 @@ func (r Role) AddRow() (int64, error) {
 func (r Role) EditRow() error {
 	_, err := sq.
 		Update(roleTable).
-		Set("name", r.Name).
-		Set("description", r.Description).
+		SetMap(sq.Eq{
+			"name":        r.Name,
+			"description": r.Description,
+			"update_time": time.Now().Format("2006-01-02 15:04:05"),
+		}).
 		Where(sq.Eq{"id": r.ID}).
 		RunWith(DB).
 		Exec()

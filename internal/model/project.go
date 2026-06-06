@@ -10,6 +10,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"time"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/zhenorzz/goploy/config"
@@ -186,6 +187,7 @@ func (p Project) EditRow() error {
 			"deploy_server_mode":    p.DeployServerMode,
 			"notify_type":           p.NotifyType,
 			"notify_target":         p.NotifyTarget,
+			"update_time":           time.Now().Format("2006-01-02 15:04:05"),
 		}).
 		Where(sq.Eq{"id": p.ID}).
 		RunWith(DB).
@@ -198,6 +200,7 @@ func (p Project) SetAutoDeploy() error {
 		Update(projectTable).
 		SetMap(sq.Eq{
 			"auto_deploy": p.AutoDeploy,
+			"update_time": time.Now().Format("2006-01-02 15:04:05"),
 		}).
 		Where(sq.Eq{"id": p.ID}).
 		RunWith(DB).
@@ -226,6 +229,7 @@ func (p Project) Publish() error {
 			"publisher_name":     p.PublisherName,
 			"deploy_state":       p.DeployState,
 			"last_publish_token": p.LastPublishToken,
+			"update_time":        time.Now().Format("2006-01-02 15:04:05"),
 		}).
 		Where(sq.Eq{"id": p.ID}).
 		RunWith(DB).
@@ -239,6 +243,7 @@ func (p Project) ResetState() error {
 		Update(projectTable).
 		SetMap(sq.Eq{
 			"deploy_state": ProjectNotDeploy,
+			"update_time":  time.Now().Format("2006-01-02 15:04:05"),
 		}).
 		Where(sq.Eq{"id": p.ID}).
 		RunWith(DB).
@@ -355,7 +360,7 @@ func (p Project) GetList() (Projects, error) {
 	}
 
 	rows, err := builder.
-		OrderBy("id DESC").
+		OrderBy(projectTable + ".id DESC").
 		RunWith(DB).
 		Query()
 

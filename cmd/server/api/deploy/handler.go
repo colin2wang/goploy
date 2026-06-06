@@ -921,7 +921,11 @@ func (Deploy) Webhook(gp *server.Goploy) server.Response {
 	if project.RepoType == model.RepoSVN {
 		branch = reqData.Ref
 	} else {
-		branch = strings.Split(reqData.Ref, "/")[2]
+		refParts := strings.Split(reqData.Ref, "/")
+		if len(refParts) < 3 {
+			return response.JSON{Code: response.Error, Message: "Invalid webhook ref format, expected refs/heads/<branch>"}
+		}
+		branch = refParts[2]
 	}
 
 	if project.Branch != branch {

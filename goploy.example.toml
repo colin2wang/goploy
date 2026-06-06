@@ -25,15 +25,19 @@ expire = 86400
 key = '2021-12-14 18:43:15.8805255 +0800 CST m=+0.004156701'
 
 [db]
-type = 'mysql'
-user = 'root'
-password = ''
-host = '127.0.0.1'
-port = '3306'
-database = 'goploy'
+type = 'sqlite'
+path = 'data/goploy.db'
 
 [log]
-path = 'stdout'
+path = 'logs'
+# Max size in megabytes before rotation (default 100)
+maxSize = 100
+# Max number of old log files to keep (default 30)
+maxBackups = 30
+# Max days to retain old log files (default 30)
+maxAge = 30
+# Compress rotated logs (default false)
+compress = false
 
 [web]
 port = '80'

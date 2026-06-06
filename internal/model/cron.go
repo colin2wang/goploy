@@ -4,7 +4,11 @@
 
 package model
 
-import sq "github.com/Masterminds/squirrel"
+import (
+	"time"
+
+	sq "github.com/Masterminds/squirrel"
+)
 
 const cronTable = "`cron`"
 
@@ -113,6 +117,7 @@ func (c Cron) EditRow() error {
 			"log_level":   c.LogLevel,
 			"description": c.Description,
 			"editor":      c.Editor,
+			"update_time": time.Now().Format("2006-01-02 15:04:05"),
 		}).
 		Where(sq.Eq{"id": c.ID}).
 		RunWith(DB).
@@ -124,7 +129,8 @@ func (c Cron) RemoveRow() error {
 	_, err := sq.
 		Update(cronTable).
 		SetMap(sq.Eq{
-			"state": Disable,
+			"state":       Disable,
+			"update_time": time.Now().Format("2006-01-02 15:04:05"),
 		}).
 		Where(sq.Eq{"id": c.ID}).
 		RunWith(DB).

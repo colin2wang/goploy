@@ -5,6 +5,8 @@
 package model
 
 import (
+	"time"
+
 	sq "github.com/Masterminds/squirrel"
 )
 
@@ -118,11 +120,12 @@ func (pp ProjectProcess) EditRow() error {
 	_, err := sq.
 		Update(projectProcessTable).
 		SetMap(sq.Eq{
-			"name":    pp.Name,
-			"start":   pp.Start,
-			"stop":    pp.Stop,
-			"status":  pp.Status,
-			"restart": pp.Restart,
+			"name":        pp.Name,
+			"start":       pp.Start,
+			"stop":        pp.Stop,
+			"status":      pp.Status,
+			"restart":     pp.Restart,
+			"update_time": time.Now().Format("2006-01-02 15:04:05"),
 		}).
 		Where(sq.Eq{"id": pp.ID}).
 		RunWith(DB).

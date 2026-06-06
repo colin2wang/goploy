@@ -82,21 +82,30 @@ Goploy 用于:
 
 下载 [release](https://github.com/zhenorzz/goploy/releases)
 
-或者从tag构建
+或者从源码构建
 ```
 git clone https://github.com/zhenorzz/goploy.git
 cd ./goploy
-git checkout -b tagname
 cd ./web
 npm install && npm run build
 cd ../
-go build -o goploy cmd/server/main.go 
+go build -o goploy cmd/server/main.go
 ```
 
+**交叉编译：**
+
+| 平台 | 命令 |
+|------|------|
+| Linux amd64 + Windows amd64 | Windows 下执行 `build.bat`，Linux/macOS 下执行 `./build.sh` |
+| Linux amd64 | `env GOOS=linux GOARCH=amd64 go build -o goploy cmd/server/main.go` |
+| Windows amd64 | `env GOOS=windows GOARCH=amd64 go build -o goploy.exe cmd/server/main.go` |
+
+**数据库：** SQLite（嵌入式，无需外部数据库）。数据库文件在首次启动时自动创建（默认路径：`data/goploy.db`）。
+
 ## 使用
-1. 运行./goploy or goploy.exe or goploy.mac (运行不了可能需要 chmod a+x, 再不行就发issue或加群)
-2. 根据安装指引填入相关的配置
-3. web http://ip:port  (账号:密码 admin:admin!@#)
+1. 运行 `./goploy` 或 `goploy.exe`
+2. 根据安装指引填入数据库路径和监听端口
+3. 浏览器打开 `http://ip:port`（账号:密码 admin:admin!@#）
 
 ## 预览
 ![预览](./preview.gif)
@@ -105,19 +114,18 @@ go build -o goploy cmd/server/main.go
 ![原理图](./goploy.png)
 
 ## 后端开发说明
-1. 安装go，必须是1.16以上
-2. 项目使用 go mod 管理
-3. 修改 goploy.toml `cp goploy.example.toml goploy.toml`
-4. 需要编译一次前端 [前端开发说明](#前端开发说明)
-5. 运行 `cd cmd/server && go run main.go --asset-dir=../../`
-6. 或者使用 gin（可以热更新代码，改变就生效）
+1. 安装 go >= 1.21
+2. `cp goploy.example.toml goploy.toml` 并修改配置
+3. 需要编译一次前端 [前端开发说明](#前端开发说明)
+4. 运行 `cd cmd/server && go run main.go --asset-dir=../../`
+5. 或者使用 air（热重载）
 
 ## 前端开发说明
 1. `cd web`
-2. `npm install` 或者 `yarn install`
+2. `pnpm install` 或 `npm install` 或 `yarn install`
 3. 修改 .env.development
-4. `npm run dev` 或者 `yarn dev`
-5. 编译 `npm run build` 或者 `yarn build`
+4. `pnpm run dev` 或 `npm run dev` 或 `yarn dev`
+5. 编译 `pnpm run build` 或 `npm run build` 或 `yarn build`
 
 ## 如何贡献
 

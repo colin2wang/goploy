@@ -197,6 +197,7 @@ func (u User) EditRow() error {
 		}
 		builder = builder.Set("password", hashedPassword)
 	}
+	builder = builder.Set("update_time", time.Now().Format("2006-01-02 15:04:05"))
 	_, err := builder.RunWith(DB).Exec()
 	return err
 }

@@ -195,6 +195,7 @@ func (m Monitor) EditRow() error {
 			"fail_script":       m.FailScript,
 			"success_server_id": m.SuccessServerID,
 			"fail_server_id":    m.FailServerID,
+			"update_time":       time.Now().Format("2006-01-02 15:04:05"),
 		}).
 		Where(sq.Eq{"id": m.ID}).
 		RunWith(DB).

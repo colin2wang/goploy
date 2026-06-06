@@ -6,6 +6,7 @@ package model
 
 import (
 	sq "github.com/Masterminds/squirrel"
+	"time"
 )
 
 const projectTaskTable = "`project_task`"
@@ -167,9 +168,10 @@ func (pt ProjectTask) RemoveRow() error {
 	_, err := sq.
 		Update(projectTaskTable).
 		SetMap(sq.Eq{
-			"state":     Disable,
-			"editor":    pt.Editor,
-			"editor_id": pt.EditorID,
+			"state":       Disable,
+			"editor":      pt.Editor,
+			"editor_id":   pt.EditorID,
+			"update_time": time.Now().Format("2006-01-02 15:04:05"),
 		}).
 		Where(sq.Eq{"id": pt.ID}).
 		RunWith(DB).

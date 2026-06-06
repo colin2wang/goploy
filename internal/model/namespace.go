@@ -5,6 +5,8 @@
 package model
 
 import (
+	"time"
+
 	sq "github.com/Masterminds/squirrel"
 )
 
@@ -39,7 +41,7 @@ func (ns Namespace) AddRow() (int64, error) {
 func (ns Namespace) EditRow() error {
 	_, err := sq.
 		Update(namespaceTable).
-		Set("name", ns.Name).
+		SetMap(sq.Eq{"name": ns.Name, "update_time": time.Now().Format("2006-01-02 15:04:05")}).
 		Where(sq.Eq{"id": ns.ID}).
 		RunWith(DB).
 		Exec()

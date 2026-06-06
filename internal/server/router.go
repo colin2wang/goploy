@@ -48,6 +48,17 @@ func (rt *Router) Register(ra RouteHandler) {
 }
 
 func (rt *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	defer func() {
+		if rec := recover(); rec != nil {
+			log.WithFields(log.Fields{
+				"remote": r.RemoteAddr,
+				"method": r.Method,
+				"path":   r.URL.Path,
+				"panic":  fmt.Sprintf("%v", rec),
+			}).Error("http handler panic recovered")
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		}
+	}()
 
 	if config.Toml.CORS.Enabled {
 		w.Header().Set("Access-Control-Allow-Origin", config.Toml.CORS.Origins)

@@ -6,6 +6,7 @@ package model
 
 import (
 	"fmt"
+
 	sq "github.com/Masterminds/squirrel"
 )
 
@@ -57,7 +58,7 @@ func (pt PublishTrace) GetList(page, limit uint64) (PublishTraces, error) {
 			fmt.Sprintf("min(%s.publisher_id)", publishTraceTable),
 			fmt.Sprintf("min(%s.publisher_name)", publishTraceTable),
 			fmt.Sprintf("min(%s.state)", publishTraceTable),
-			fmt.Sprintf("IFNULL(GROUP_CONCAT(IF(%s.state = 0, %[1]s.detail, NULL)), '') as detail", publishTraceTable),
+			fmt.Sprintf("IFNULL(GROUP_CONCAT(CASE WHEN %[1]s.state = 0 THEN %[1]s.detail ELSE NULL END), '') as detail", publishTraceTable),
 			fmt.Sprintf("min(%s.insert_time) as insert_time", publishTraceTable),
 		).
 		From(publishTraceTable).
@@ -135,7 +136,7 @@ func (pt PublishTrace) GetListByToken() (PublishTraces, error) {
 			"token",
 			"project_id",
 			"project_name",
-			"if(state = 0,detail, '') as detail",
+			"CASE WHEN state = 0 THEN detail ELSE '' END as detail",
 			"state",
 			"publisher_id",
 			"publisher_name",
@@ -187,7 +188,7 @@ func (pt PublishTrace) GetPreview(
 			"token",
 			"MIN(publisher_name) publisher_name",
 			"MIN(state) state",
-			"GROUP_CONCAT(IF(type = 2 and ext != '', JSON_EXTRACT(ext, '$.commit') , '') SEPARATOR '') as ext",
+			"GROUP_CONCAT(CASE WHEN type = 2 AND ext != '' THEN JSON_EXTRACT(ext, '$.commit') ELSE '' END) as ext",
 			"MIN(insert_time) insert_time",
 			"MAX(update_time) update_time",
 		).
@@ -211,7 +212,7 @@ func (pt PublishTrace) GetPreview(
 		builder = builder.Where(sq.Like{"ext": "%" + filename + "%"})
 	}
 	if len(commitDate) > 1 {
-		builder = builder.Where(`substring(ext, POSITION('"timestamp":' IN ext) + 12, 10) between ? and ?`, commitDate[0], commitDate[1])
+		builder = builder.Where(`substring(ext, instr(ext, '"timestamp":') + 12, 10) between ? and ?`, commitDate[0], commitDate[1])
 	}
 	if len(deployDate) > 1 {
 		builder = builder.Where("insert_time between ? and ?", deployDate[0], deployDate[1])
@@ -264,7 +265,7 @@ func (pt PublishTrace) GetPreview(
 		builder = builder.Where(sq.Like{"ext": "%" + filename + "%"})
 	}
 	if len(commitDate) > 1 {
-		builder = builder.Where(`substring(ext, POSITION('"timestamp":' IN ext) + 12, 10) between ? and ?`, commitDate[0], commitDate[1])
+		builder = builder.Where(`substring(ext, instr(ext, '"timestamp":') + 12, 10) between ? and ?`, commitDate[0], commitDate[1])
 	}
 	if len(deployDate) > 1 {
 		builder = builder.Where("insert_time between ? and ?", deployDate[0], deployDate[1])

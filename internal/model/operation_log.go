@@ -62,7 +62,7 @@ func (ol OperationLog) GetList(page, limit uint64) (OperationLogs, error) {
 	rows, err := builder.
 		Limit(limit).
 		Offset((page - 1) * limit).
-		OrderBy("id DESC").
+		OrderBy(operationLogTable + ".id DESC").
 		RunWith(DB).
 		Query()
 	if err != nil {

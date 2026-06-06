@@ -30,7 +30,7 @@ func (c *Charts) Query(date string) error {
 	endTimestamp := startTimestamp + 86400
 	rows, err := DB.Query(
 		`SELECT 
-		  FROM_UNIXTIME(create_time, '%H')as hour, 
+		  strftime('%H', create_time, 'unixepoch')as hour, 
 		  COUNT(*) as commit, 
 		  COUNT(status = 2 or null) as deploy, 
 		  COUNT(status = 3 or null) as fail, 
